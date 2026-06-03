@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 /// @title BuyMeACoffee
 /// @notice A simple tip jar dApp. Anyone can send a tip with a name and a
 ///         message; only the owner can withdraw the collected funds.
-/// @dev    Your first end-to-end project. Read every line and make sure you
+/// @dev    My first end-to-end project. Read every line and make sure you
 ///         understand WHY it's there before you change anything.
 contract BuyMeACoffee {
     // The address that deploys the contract becomes the owner and the only
