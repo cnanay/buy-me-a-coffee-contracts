@@ -21,7 +21,7 @@ contract BuyMeACoffeeV2Test is Test {
 
     function setUp() public {
         vm.prank(platform);
-        coffee = new BuyMeACoffeeV2(creator, FEE_BPS);
+        coffee = new BuyMeACoffeeV2(platform, creator, FEE_BPS);
 
         vm.deal(alice, 10 ether);
         vm.deal(bob, 10 ether);
@@ -39,7 +39,7 @@ contract BuyMeACoffeeV2Test is Test {
 
     function test_ZeroJarOwnerDefaultsToDeployer() public {
         vm.prank(platform);
-        BuyMeACoffeeV2 personal = new BuyMeACoffeeV2(address(0), 0);
+        BuyMeACoffeeV2 personal = new BuyMeACoffeeV2(address(0), address(0), 0);
         assertEq(personal.owner(), platform);
         assertEq(personal.platformOwner(), platform);
     }
@@ -47,7 +47,7 @@ contract BuyMeACoffeeV2Test is Test {
     function test_ConstructorRevertsAboveMaxFee() public {
         uint16 tooHigh = coffee.MAX_FEE_BPS() + 1;
         vm.expectRevert("Fee too high");
-        new BuyMeACoffeeV2(creator, tooHigh);
+        new BuyMeACoffeeV2(platform, creator, tooHigh);
     }
 
     /* -------------------------------------------------------------------- */
@@ -81,7 +81,7 @@ contract BuyMeACoffeeV2Test is Test {
 
     function test_ZeroFeeBehavesLikeV1() public {
         vm.prank(platform);
-        BuyMeACoffeeV2 free = new BuyMeACoffeeV2(creator, 0);
+        BuyMeACoffeeV2 free = new BuyMeACoffeeV2(platform, creator, 0);
 
         vm.prank(alice);
         free.buyCoffee{value: 1 ether}("Alice", "Hi");

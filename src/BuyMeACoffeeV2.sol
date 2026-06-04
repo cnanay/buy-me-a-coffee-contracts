@@ -46,12 +46,15 @@ contract BuyMeACoffeeV2 {
     event TipReceived(address indexed from, uint256 amount, uint256 fee);
     event FeeUpdated(uint16 newFeeBps);
 
-    /// @param _jarOwner Creator who withdraws the tips. Pass address(0) to use
-    ///                  the deployer (i.e. a personal jar with no third party).
-    /// @param _feeBps   Starting platform fee in basis points (<= MAX_FEE_BPS).
-    constructor(address _jarOwner, uint16 _feeBps) {
+    /// @param _platformOwner Receives the platform fee. Pass address(0) to use
+    ///                       the deployer. A factory passes its own owner here so
+    ///                       fees flow straight to the platform (not the factory).
+    /// @param _jarOwner      Creator who withdraws the tips. Pass address(0) to
+    ///                       use the deployer (a personal jar, no third party).
+    /// @param _feeBps        Starting platform fee in basis points (<= MAX_FEE_BPS).
+    constructor(address _platformOwner, address _jarOwner, uint16 _feeBps) {
         require(_feeBps <= MAX_FEE_BPS, "Fee too high");
-        platformOwner = msg.sender;
+        platformOwner = _platformOwner == address(0) ? msg.sender : _platformOwner;
         owner = _jarOwner == address(0) ? msg.sender : _jarOwner;
         feeBps = _feeBps;
     }
