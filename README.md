@@ -11,10 +11,22 @@ collected funds.
 
 ---
 
-## The contract
+## Contracts
 
-[`src/BuyMeACoffee.sol`](src/BuyMeACoffee.sol) stores each tip as a `Memo` and
-emits an event the frontend listens to.
+This repo contains three contracts:
+
+| Contract | Purpose |
+| -------- | ------- |
+| [`BuyMeACoffee.sol`](src/BuyMeACoffee.sol) | **V1** — the simple single-owner tip jar. **This is the deployed/live one.** |
+| [`BuyMeACoffeeV2.sol`](src/BuyMeACoffeeV2.sol) | Tip jar with an optional **platform fee** split between a platform and the jar owner. |
+| [`CoffeeFactory.sol`](src/CoffeeFactory.sol) | A **factory** so anyone can deploy their own V2 jar; the platform earns a fee across all jars. |
+
+> V2 and the Factory are **not deployed** — they're the building blocks for a
+> multi-creator "tip platform" earning model.
+
+### BuyMeACoffee (V1 — deployed)
+
+Stores each tip as a `Memo` and emits an event the frontend listens to.
 
 ```solidity
 struct Memo {
@@ -39,16 +51,34 @@ event NewMemo(address indexed from, uint256 timestamp, string name, string messa
 > Etherscan API). Withdrawals use the low-level `call` pattern (current best
 > practice for sending ETH).
 
+### BuyMeACoffeeV2 — optional platform fee
+
+Same tip jar as V1, but each tip is split: a configurable fee (in basis points,
+**capped at 10%**) goes to the `platformOwner`, the rest accrues to the jar
+`owner`. Fees are tracked separately so the owner can never withdraw them — the
+platform claims them with `withdrawPlatformFees()`. Stays **backwards-compatible
+with the frontend** (`owner`, `buyCoffee`, `withdrawTips`, `getMemos`, `NewMemo`
+are unchanged, so the fee is invisible to tippers). Set the fee to `0` and it
+behaves exactly like V1.
+
+### CoffeeFactory — multi-creator platform
+
+Anyone calls `createJar()` to deploy their own V2 jar (they own and withdraw its
+tips); every jar is wired so the **platform** (the factory's deployer) earns the
+fee on all tips across all jars. Fees never pass through the factory — each jar
+pays the platform directly, which is simpler and safer.
+
 ## Tests
 
-A full test suite lives in [`test/BuyMeACoffee.t.sol`](test/BuyMeACoffee.t.sol)
-— **10 tests, all passing**, covering:
+**35 tests, all passing**, across the three contracts:
 
-- Owner is set on deployment; starts with no memos
-- `buyCoffee` stores the memo, increases the balance, supports multiple memos,
-  emits `NewMemo`, and reverts on a zero-value tip
-- `withdrawTips` transfers the balance to the owner, and reverts for non-owners
-  and when the balance is empty
+- [`BuyMeACoffee.t.sol`](test/BuyMeACoffee.t.sol) (10) — owner/deployment, tip
+  storage & balance, `NewMemo`, zero-tip revert, owner-only withdrawals.
+- [`BuyMeACoffeeV2.t.sol`](test/BuyMeACoffeeV2.t.sol) (15) — fee split math, both
+  withdrawal paths, access control, fee cap, and zero-fee = V1 behavior.
+- [`CoffeeFactory.t.sol`](test/CoffeeFactory.t.sol) (10) — jar creation &
+  indexing, multi-creator support, fee cap, and an end-to-end check that fees
+  actually reach the platform.
 
 ```bash
 forge test -vv
@@ -102,12 +132,29 @@ forge script script/DeployBuyMeACoffee.s.sol:DeployBuyMeACoffee \
 
 > ⚠️ `.env` is gitignored — never commit your private key or API keys.
 
+To deploy the **factory** instead (deployer becomes the fee-earning platform;
+set the default fee via `FACTORY_FEE_BPS`, default 250 = 2.5%):
+
+```bash
+source .env
+
+forge script script/DeployCoffeeFactory.s.sol:DeployCoffeeFactory \
+  --rpc-url "$SEPOLIA_RPC_URL" \
+  --private-key "$PRIVATE_KEY" \
+  --broadcast \
+  --verify \
+  --etherscan-api-key "$ETHERSCAN_API_KEY"
+```
+
 ## Project layout
 
 ```
-src/BuyMeACoffee.sol              # the contract
-test/BuyMeACoffee.t.sol           # forge tests
-script/DeployBuyMeACoffee.s.sol   # deploy script
+src/BuyMeACoffee.sol              # V1 — the deployed tip jar
+src/BuyMeACoffeeV2.sol            # tip jar with an optional platform fee
+src/CoffeeFactory.sol             # factory: one-click jars, one platform fee
+test/                             # forge tests (35 total, one file per contract)
+script/DeployBuyMeACoffee.s.sol   # deploy V1
+script/DeployCoffeeFactory.s.sol  # deploy the factory
 ```
 
 ## Built with
