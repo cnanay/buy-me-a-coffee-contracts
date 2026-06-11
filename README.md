@@ -21,8 +21,12 @@ This repo contains three contracts:
 | [`BuyMeACoffeeV2.sol`](src/BuyMeACoffeeV2.sol) | Tip jar with an optional **platform fee** split between a platform and the jar owner. |
 | [`CoffeeFactory.sol`](src/CoffeeFactory.sol) | A **factory** so anyone can deploy their own V2 jar; the platform earns a fee across all jars. |
 
-> V2 and the Factory are **not deployed** — they're the building blocks for a
-> multi-creator "tip platform" earning model.
+> The **Factory is live on Sepolia** at
+> [`0x3694e2553d81809934350dcb0023dc3a2eae7867`](https://sepolia.etherscan.io/address/0x3694e2553d81809934350dcb0023dc3a2eae7867)
+> (verified, default fee 250 bps = 2.5%) — the multi-creator "tip platform"
+> earning model. The first jar
+> ([`0x007656bCBCc009534537100819626BADBfC23017`](https://sepolia.etherscan.io/address/0x007656bCBCc009534537100819626BADBfC23017))
+> was tested end-to-end on-chain: tip → 2.5% fee split → platform withdrawal.
 
 ### BuyMeACoffee (V1 — deployed)
 
