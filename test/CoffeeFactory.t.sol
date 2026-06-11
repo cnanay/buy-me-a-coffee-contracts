@@ -24,8 +24,9 @@ contract CoffeeFactoryTest is Test {
     );
 
     function setUp() public {
+        // address(0) = "platform defaults to the deployer".
         vm.prank(platform);
-        factory = new CoffeeFactory(FEE);
+        factory = new CoffeeFactory(address(0), FEE);
         vm.deal(tipper, 10 ether);
     }
 
@@ -42,7 +43,21 @@ contract CoffeeFactoryTest is Test {
     function test_ConstructorRevertsAboveMaxFee() public {
         uint16 tooHigh = factory.MAX_FEE_BPS() + 1;
         vm.expectRevert("Fee too high");
-        new CoffeeFactory(tooHigh);
+        new CoffeeFactory(address(0), tooHigh);
+    }
+
+    function test_ExplicitPlatformOwnerDiffersFromDeployer() public {
+        // Deploy from a throwaway key, but route all fees to `platform`.
+        address deployer = makeAddr("deployer");
+        vm.prank(deployer);
+        CoffeeFactory f = new CoffeeFactory(platform, FEE);
+
+        assertEq(f.platformOwner(), platform); // not the deployer
+
+        // Jars created through it pay the explicit platform too.
+        vm.prank(creatorA);
+        BuyMeACoffeeV2 jar = BuyMeACoffeeV2(f.createJar());
+        assertEq(jar.platformOwner(), platform);
     }
 
     /* -------------------------------------------------------------------- */

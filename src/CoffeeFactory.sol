@@ -31,9 +31,15 @@ contract CoffeeFactory {
     );
     event DefaultFeeUpdated(uint16 newFeeBps);
 
-    constructor(uint16 _defaultFeeBps) {
+    /// @param _platformOwner The address that earns fees on every jar. Pass
+    ///                       address(0) to default to the deployer. Use a
+    ///                       wallet you control directly (it must be able to
+    ///                       call `withdrawPlatformFees()` on each jar) — a
+    ///                       hot deploy key can then stay free of funds.
+    /// @param _defaultFeeBps Starting fee for new jars (<= MAX_FEE_BPS).
+    constructor(address _platformOwner, uint16 _defaultFeeBps) {
         require(_defaultFeeBps <= MAX_FEE_BPS, "Fee too high");
-        platformOwner = msg.sender;
+        platformOwner = _platformOwner == address(0) ? msg.sender : _platformOwner;
         defaultFeeBps = _defaultFeeBps;
     }
 
